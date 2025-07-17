@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Absensi Siswa Kelas 4B</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+        }
+        .nav-item.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
+        select {
+            scrollbar-width: thin;
+            scrollbar-color: #c1c1c1 #f1f1f1;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+        .status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+        }
+        .status-badge svg {
+            width: 0.75rem;
+            height: 0.75rem;
+            margin-right: 0.25rem;
+        }
+        .status-hadir {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .status-izin {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+        .status-sakit {
+            background-color: #fef3c7;
+            color: #92400e;
+        }
+        .status-alfa {
+            background-color: #fee2e2;
+            color: #b91c1c;
+        }
+        .btn-primary {
+            background-color: #3b82f6;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #2563eb;
+        }
+        .btn-success {
+            background-color: #10b981;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-success:hover {
+            background-color: #059669;
+        }
+        .btn-danger {
+            background-color: #ef4444;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-danger:hover {
+            background-color: #dc2626;
+        }
+        .btn-warning {
+            background-color: #f59e0b;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-warning:hover {
+            background-color: #d97706;
+        }
+        .semester-tab.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg">
+            <div class="container mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between">
+                <div class="flex items-center mb-4 md:mb-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold">Sistem Absensi Siswa</h1>
+                        <p class="text-sm md:text-base">Kelas 4B - MI Ar Roudhoh</p>
+                    </div>
+                </div>
+                <div class="flex items-center">
+                    <div id="currentDate" class="text-sm md:text-base mr-4"></div>
+                    <button id="toggleNav" class="md:hidden bg-white bg-opacity-20 rounded p-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav id="mainNav" class="bg-white shadow-md hidden md:block">
+            <div class="container mx-auto px-4">
+                <ul class="flex flex-col md:flex-row">
+                    <li class="nav-item active py-2 px-4 md:px-6 cursor-pointer rounded-t-md font-medium text-center" data-target="absensiHarian">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        Absensi Harian
+                    </li>
+                    <li class="nav-item py-2 px-4 md:px-6 cursor-pointer rounded-t-md font-medium text-center" data-target="rekapBulanan">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        Rekap Bulanan
+                    </li>
+                    <li class="nav-item py-2 px-4 md:px-6 cursor-pointer rounded-t-md font-medium text-center" data-target="rekapSemester">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        Rekap Semester
+                    </li>
+                    <li class="nav-item py-2 px-4 md:px-6 cursor-pointer rounded-t-md font-medium text-center" data-target="statistikKehadiran">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Statistik Kehadiran
+                    </li>
+                    <li class="nav-item py-2 px-4 md:px-6 cursor-pointer rounded-t-md font-medium text-center" data-target="tambahSiswa">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                        </svg>
+                        Tambah Siswa
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-grow container mx-auto px-4 py-6">
+            <!-- Absensi Harian Section -->
+            <section id="absensiHarian" class="page-section fade-in">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                            </svg>
+                            Form Absensi Harian
+                        </h2>
+                        <form id="absensiForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+                                <select id="namaSiswa" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                    <option value="">Pilih Siswa</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                                <input type="text" value="4B" class="w-full px-4 py-2 border rounded-md bg-gray-100" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                                <input type="date" id="tanggalAbsensi" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Status Kehadiran</label>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <button type="button" class="status-btn btn-primary py-2 px-3 rounded-md text-sm font-medium" data-status="Hadir">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        Hadir
+                                    </button>
+                                    <button type="button" class="status-btn bg-gray-200 text-gray-700 py-2 px-3 rounded-md text-sm font-medium" data-status="Izin">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Izin
+                                    </button>
+                                    <button type="button" class="status-btn bg-gray-200 text-gray-700 py-2 px-3 rounded-md text-sm font-medium" data-status="Sakit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                        </svg>
+                                        Sakit
+                                    </button>
+                                    <button type="button" class="status-btn bg-gray-200 text-gray-700 py-2 px-3 rounded-md text-sm font-medium" data-status="Alfa">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Alfa
+                                    </button>
+                                </div>
+                                <input type="hidden" id="statusKehadiran" value="Hadir">
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md font-medium transition duration-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+                                    </svg>
+                                    Simpan Absensi
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-blue-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                                </svg>
+                                Absensi Hari Ini
+                            </h2>
+                            <div class="flex space-x-2">
+                                <input type="date" id="filterTanggalHarian" class="pl-3 pr-3 py-1 border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <button id="refreshAbsensiHarian" class="bg-green-500 hover:bg-green-600 text-white p-2 rounded-md">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full bg-white border">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                        <th class="py-3 px-6 text-left">No</th>
+                                        <th class="py-3 px-6 text-left">Nama Siswa</th>
+                                        <th class="py-3 px-6 text-center">Status</th>
+                                        <th class="py-3 px-6 text-center">Waktu Absen</th>
+                                        <th class="py-3 px-6 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="absensiHarianTable" class="text-gray-600 text-sm">
+                                    <!-- Data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="absensiHarianEmpty" class="text-center py-4 text-gray-500">
+                            Belum ada data absensi untuk hari ini
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rekap Bulanan Section -->
+            <section id="rekapBulanan" class="page-section hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold mb-4 md:mb-0 text-blue-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            Rekap Absensi Bulanan
+                        </h2>
+                        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+                            <select id="bulanRekap" class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                <option value="0">Januari</option>
+                                <option value="1">Februari</option>
+                                <option value="2">Maret</option>
+                                <option value="3">April</option>
+                                <option value="4">Mei</option>
+                                <option value="5">Juni</option>
+                                <option value="6">Juli</option>
+                                <option value="7">Agustus</option>
+                                <option value="8">September</option>
+                                <option value="9">Oktober</option>
+                                <option value="10">November</option>
+                                <option value="11">Desember</option>
+                            </select>
+                            <select id="tahunRekap" class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                            <button id="filterBulanan" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition duration-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">No</th>
+                                    <th class="py-3 px-6 text-left">Nama Siswa</th>
+                                    <th class="py-3 px-6 text-center">Hadir</th>
+                                    <th class="py-3 px-6 text-center">Izin</th>
+                                    <th class="py-3 px-6 text-center">Sakit</th>
+                                    <th class="py-3 px-6 text-center">Alfa</th>
+                                    <th class="py-3 px-6 text-center">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rekapBulananTable" class="text-gray-600 text-sm">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="rekapBulananEmpty" class="text-center py-4 text-gray-500">
+                        Belum ada data absensi untuk bulan ini
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="downloadRekapBulanan" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md font-medium transition duration-300 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Unduh PDF
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rekap Semester Section -->
+            <section id="rekapSemester" class="page-section hidden">
+                <div class="bg-white rounded-lg shadow-md p-6">
+                    <div class="flex flex-col md:flex-row justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold mb-4 md:mb-0 text-blue-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                            Rekap Absensi Semester
+                        </h2>
+                        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2">
+                            <div class="flex rounded-md overflow-hidden border">
+                                <button class="semester-tab active py-2 px-4 text-sm font-medium" data-semester="1">
+                                    Semester 1 (Jul-Des)
+                                </button>
+                                <button class="semester-tab py-2 px-4 text-sm font-medium bg-gray-100" data-semester="2">
+                                    Semester 2 (Jan-Jun)
+                                </button>
+                            </div>
+                            <select id="tahunSemesterRekap" class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                            <button id="filterSemester" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition duration-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                                </svg>
+                                Filter
+                            </button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full bg-white border">
+                            <thead>
+                                <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                    <th class="py-3 px-6 text-left">No</th>
+                                    <th class="py-3 px-6 text-left">Nama Siswa</th>
+                                    <th class="py-3 px-6 text-center">Hadir</th>
+                                    <th class="py-3 px-6 text-center">Izin</th>
+                                    <th class="py-3 px-6 text-center">Sakit</th>
+                                    <th class="py-3 px-6 text-center">Alfa</th>
+                                    <th class="py-3 px-6 text-center">Total</th>
+                                    <th class="py-3 px-6 text-center">Persentase</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rekapSemesterTable" class="text-gray-600 text-sm">
+                                <!-- Data will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="rekapSemesterEmpty" class="text-center py-4 text-gray-500">
+                        Belum ada data absensi untuk semester ini
+                    </div>
+                    <div class="mt-4 flex justify-end">
+                        <button id="downloadRekapSemester" class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md font-medium transition duration-300 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Unduh PDF
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Statistik Kehadiran Section -->
+            <section id="statistikKehadiran" class="page-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                            Grafik Kehadiran Bulanan
+                        </h2>
+                        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
+                            <select id="bulanGrafik" class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                <option value="0">Januari</option>
+                                <option value="1">Februari</option>
+                                <option value="2">Maret</option>
+                                <option value="3">April</option>
+                                <option value="4">Mei</option>
+                                <option value="5">Juni</option>
+                                <option value="6">Juli</option>
+                                <option value="7">Agustus</option>
+                                <option value="8">September</option>
+                                <option value="9">Oktober</option>
+                                <option value="10">November</option>
+                                <option value="11">Desember</option>
+                            </select>
+                            <select id="tahunGrafik" class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                            <button id="updateGrafikBulanan" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition duration-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Update
+                            </button>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="chartBulanan"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z" />
+                            </svg>
+                            Grafik Kehadiran Semester
+                        </h2>
+                        <div class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-2 mb-4">
+                            <div class="flex rounded-md overflow-hidden border">
+                                <button class="semester-tab active py-2 px-4 text-sm font-medium" data-semester="1" id="semesterGrafik1">
+                                    Semester 1 (Jul-Des)
+                                </button>
+                                <button class="semester-tab py-2 px-4 text-sm font-medium bg-gray-100" data-semester="2" id="semesterGrafik2">
+                                    Semester 2 (Jan-Jun)
+                                </button>
+                            </div>
+                            <select id="tahunSemesterGrafik" class="px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                                <!-- Years will be populated dynamically -->
+                            </select>
+                            <button id="updateGrafikSemester" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition duration-300 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Update
+                            </button>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="chartSemester"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Tambah Siswa Section -->
+            <section id="tambahSiswa" class="page-section hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <h2 class="text-xl font-bold mb-4 text-blue-600 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                            </svg>
+                            Tambah Siswa Baru
+                        </h2>
+                        <form id="tambahSiswaForm" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+                                <input type="text" id="namaSiswaBaru" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Masukkan nama lengkap siswa">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-1">Kelas</label>
+                                <input type="text" value="4B" class="w-full px-4 py-2 border rounded-md bg-gray-100" readonly>
+                            </div>
+                            <div class="flex justify-end">
+                                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-6 rounded-md font-medium transition duration-300 flex items-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                    </svg>
+                                    Tambah Siswa
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="bg-white rounded-lg shadow-md p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-bold text-blue-600 flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                </svg>
+                                Daftar Siswa Kelas 4B
+                            </h2>
+                            <div class="relative">
+                                <input type="text" id="searchSiswa" class="pl-8 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Cari siswa...">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute left-2 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="overflow-y-auto max-h-96 custom-scrollbar">
+                            <table class="min-w-full bg-white border">
+                                <thead>
+                                    <tr class="bg-gray-100 text-gray-600 uppercase text-sm leading-normal">
+                                        <th class="py-3 px-6 text-left">No</th>
+                                        <th class="py-3 px-6 text-left">Nama Siswa</th>
+                                        <th class="py-3 px-6 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="daftarSiswaTable" class="text-gray-600 text-sm">
+                                    <!-- Data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="bg-gradient-to-r from-blue-500 to-blue-600 text-white py-4">
+            <div class="container mx-auto px-4 text-center">
+                <p>© <span id="currentYear"></span> MI Ar Roudhoh - Sistem Absensi Siswa Kelas 4B</p>
+                <p class="text-sm mt-1">Tambakasri-Tajinan-Malang</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modal for Edit/Delete Confirmation -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-md">
+            <div class="flex justify-between items-center mb-4">
+                <h3 id="modalTitle" class="text-lg font-bold text-gray-800"></h3>
+                <button id="closeModal" class="text-gray-500 hover:text-gray-700">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+            </div>
+            <div id="modalContent" class="mb-6"></div>
+            <div id="modalFooter" class="flex justify-end space-x-2"></div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-4 right-4 bg-green-500 text-white px-6 py-3 rounded-md shadow-lg transform transition-transform duration-300 translate-y-20 opacity-0 flex items-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+        </svg>
+        <span id="toastMessage"></span>
+    </div>
+
+    <script>
+        // Initialize data storage
+        let students = [
+            { name: "ABIYAKSA ZIQRI SAPUTRA" },
+            { name: "ACHMAD ZAIN AL ARKHAN" },
+            { name: "ADHYASTA PRASAJA SAPUTRA" },
+            { name: "ADIBA SYAKILA B." },
+            { name: "ALESHA ISYANA PRIHANDOYO" },
+            { name: "ALFIYYAH HASNA" },
+            { name: "ASVATHAMA SATRIA" },
+            { name: "ATHIYYAH SALSABILA" },
+            { name: "AZKA ABIY KAUTSAR" },
+            { name: "DENY CHANDRA" },
+            { name: "FADHIL ARKAN" },
+            { name: "FATHIR RAJENDRA YUSMAN" },
+            { name: "FATIH ASLIYAH" },
+            { name: "FAYYAD GHIFARI" },
+            { name: "HAIKAL AGIL" },
+            { name: "M. ROFI'US SALMAN ALFARIDZIE" },
+            { name: "MUHAMMAD AZKA PRADESTA" },
+            { name: "MUHAMMAD RUI ZACKY" },
+            { name: "NADYA ZAHWA HUMAIRA" },
+            { name: "NAURA ZAHIRA" },
+            { name: "RAFAEL AURELIO" },
+            { name: "SYAFIAH QORI" }
+        ];
+        
+        let attendanceData = [];
+        let currentSection = 'absensiHarian';
+        let chartBulanan, chartSemester;
+        let currentSemester = '1';
+        
+        // DOM Elements
+        const currentDate = document.getElementById('currentDate');
+        const currentYearElement = document.getElementById('currentYear');
+        const toggleNav = document.getElementById('toggleNav');
+        const mainNav = document.getElementById('mainNav');
+        const navItems = document.querySelectorAll('.nav-item');
+        const pageSections = document.querySelectorAll('.page-section');
+        const namaSiswaDropdown = document.getElementById('namaSiswa');
+        const tanggalAbsensi = document.getElementById('tanggalAbsensi');
+        const statusButtons = document.querySelectorAll('.status-btn');
+        const statusKehadiran = document.getElementById('statusKehadiran');
+        const absensiForm = document.getElementById('absensiForm');
+        const absensiHarianTable = document.getElementById('absensiHarianTable');
+        const absensiHarianEmpty = document.getElementById('absensiHarianEmpty');
+        const filterTanggalHarian = document.getElementById('filterTanggalHarian');
+        const refreshAbsensiHarian = document.getElementById('refreshAbsensiHarian');
+        const tambahSiswaForm = document.getElementById('tambahSiswaForm');
+        const namaSiswaBaru = document.getElementById('namaSiswaBaru');
+        const daftarSiswaTable = document.getElementById('daftarSiswaTable');
+        const searchSiswa = document.getElementById('searchSiswa');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modalTitle');
+        const modalContent = document.getElementById('modalContent');
+        const modalFooter = document.getElementById('modalFooter');
+        const closeModal = document.getElementById('closeModal');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toastMessage');
+        const semesterTabs = document.querySelectorAll('.semester-tab');
+        const downloadRekapBulanan = document.getElementById('downloadRekapBulanan');
+        const downloadRekapSemester = document.getElementById('downloadRekapSemester');
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCurrentDate();
+            populateYearDropdowns();
+            initializeDates();
+            populateStudentDropdown();
+            updateStudentList();
+            updateAttendanceTable(new Date().toISOString().split('T')[0]);
+            initializeCharts();
+            setupEventListeners();
+        });
+        
+        // Initialize date
+        function updateCurrentDate() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            currentDate.textContent = now.toLocaleDateString('id-ID', options);
+            currentYearElement.textContent = now.getFullYear();
+        }
+        
+        // Populate year dropdowns with unlimited years starting from 2025
+        function populateYearDropdowns() {
+            const startYear = 2025;
+            const yearDropdowns = [
+                document.getElementById('tahunRekap'),
+                document.getElementById('tahunSemesterRekap'),
+                document.getElementById('tahunGrafik'),
+                document.getElementById('tahunSemesterGrafik')
+            ];
+            
+            const currentYear = new Date().getFullYear();
+            const endYear = currentYear + 20; // Show 20 years ahead by default, more can be scrolled
+            
+            yearDropdowns.forEach(dropdown => {
+                dropdown.innerHTML = '';
+                for (let year = startYear; year <= endYear; year++) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    if (year === 2025) {
+                        option.selected = true;
+                    }
+                    dropdown.appendChild(option);
+                }
+                
+                // Add event listener to dynamically add more years when scrolling to the bottom
+                dropdown.addEventListener('scroll', function() {
+                    if (this.scrollTop + this.clientHeight >= this.scrollHeight - 10) {
+                        const lastYear = parseInt(this.lastChild.value);
+                        for (let year = lastYear + 1; year <= lastYear + 10; year++) {
+                            const option = document.createElement('option');
+                            option.value = year;
+                            option.textContent = year;
+                            this.appendChild(option);
+                        }
+                    }
+                });
+            });
+        }
+        
+        // Initialize form date to today
+        function initializeDates() {
+            const today = new Date().toISOString().split('T')[0];
+            tanggalAbsensi.value = today;
+            filterTanggalHarian.value = today;
+            
+            // Set current month for filters
+            const currentMonth = new Date().getMonth();
+            document.getElementById('bulanRekap').value = currentMonth;
+            document.getElementById('bulanGrafik').value = currentMonth;
+        }
+        
+        // Populate student dropdown
+        function populateStudentDropdown() {
+            namaSiswaDropdown.innerHTML = '<option value="">Pilih Siswa</option>';
+            students.sort((a, b) => a.name.localeCompare(b.name)).forEach(student => {
+                const option = document.createElement('option');
+                option.value = student.name;
+                option.textContent = student.name;
+                namaSiswaDropdown.appendChild(option);
+            });
+        }
+        
+        // Update student list table
+        function updateStudentList(filter = '') {
+            daftarSiswaTable.innerHTML = '';
+            
+            const filteredStudents = students.filter(student => 
+                student.name.toLowerCase().includes(filter.toLowerCase())
+            );
+            
+            filteredStudents.sort((a, b) => a.name.localeCompare(b.name)).forEach((student, index) => {
+                const row = document.createElement('tr');
+                row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                row.innerHTML = `
+                    <td class="py-3 px-6 text-left">${index + 1}</td>
+                    <td class="py-3 px-6 text-left">${student.name}</td>
+                    <td class="py-3 px-6 text-center">
+                        <div class="flex justify-center">
+                            <button class="edit-student bg-blue-500 text-white p-1 rounded-md mr-2" data-name="${student.name}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                </svg>
+                            </button>
+                            <button class="delete-student bg-red-500 text-white p-1 rounded-md" data-name="${student.name}">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                </svg>
+                            </button>
+                        </div>
+                    </td>
+                `;
+                daftarSiswaTable.appendChild(row);
+            });
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.edit-student').forEach(button => {
+                button.addEventListener('click', function() {
+                    const name = this.getAttribute('data-name');
+                    const student = students.find(s => s.name === name);
+                    if (student) {
+                        showEditStudentModal(student);
+                    }
+                });
+            });
+            
+            document.querySelectorAll('.delete-student').forEach(button => {
+                button.addEventListener('click', function() {
+                    const name = this.getAttribute('data-name');
+                    const student = students.find(s => s.name === name);
+                    if (student) {
+                        showDeleteStudentModal(student);
+                    }
+                });
+            });
+        }
+        
+        // Update attendance table for daily view
+        function updateAttendanceTable(date) {
+            const filteredData = attendanceData.filter(entry => entry.date === date);
+            absensiHarianTable.innerHTML = '';
+            
+            if (filteredData.length > 0) {
+                absensiHarianEmpty.classList.add('hidden');
+                
+                filteredData.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                    
+                    let statusClass = '';
+                    let statusIcon = '';
+                    
+                    switch(entry.status) {
+                        case 'Hadir':
+                            statusClass = 'status-badge status-hadir';
+                            statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                            </svg>`;
+                            break;
+                        case 'Izin':
+                            statusClass = 'status-badge status-izin';
+                            statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>`;
+                            break;
+                        case 'Sakit':
+                            statusClass = 'status-badge status-sakit';
+                            statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>`;
+                            break;
+                        case 'Alfa':
+                            statusClass = 'status-badge status-alfa';
+                            statusIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                            </svg>`;
+                            break;
+                    }
+                    
+                    row.innerHTML = `
+                        <td class="py-3 px-6 text-left">${index + 1}</td>
+                        <td class="py-3 px-6 text-left">${entry.student}</td>
+                        <td class="py-3 px-6 text-center">
+                            <span class="${statusClass}">
+                                ${statusIcon}${entry.status}
+                            </span>
+                        </td>
+                        <td class="py-3 px-6 text-center">${formatTime(entry.timestamp)}</td>
+                        <td class="py-3 px-6 text-center">
+                            <div class="flex justify-center">
+                                <button class="edit-attendance bg-blue-500 text-white p-1 rounded-md mr-2" data-id="${entry.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                    </svg>
+                                </button>
+                                <button class="delete-attendance bg-red-500 text-white p-1 rounded-md" data-id="${entry.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    `;
+                    absensiHarianTable.appendChild(row);
+                });
+                
+                // Add event listeners to edit and delete buttons
+                document.querySelectorAll('.edit-attendance').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        const entry = attendanceData.find(item => item.id === id);
+                        if (entry) {
+                            showEditAttendanceModal(entry);
+                        }
+                    });
+                });
+                
+                document.querySelectorAll('.delete-attendance').forEach(button => {
+                    button.addEventListener('click', function() {
+                        const id = this.getAttribute('data-id');
+                        const entry = attendanceData.find(item => item.id === id);
+                        if (entry) {
+                            showDeleteAttendanceModal(entry);
+                        }
+                    });
+                });
+            } else {
+                absensiHarianEmpty.classList.remove('hidden');
+            }
+        }
+        
+        // Update monthly recap table
+        function updateMonthlyRecap(month, year) {
+            const rekapBulananTable = document.getElementById('rekapBulananTable');
+            const rekapBulananEmpty = document.getElementById('rekapBulananEmpty');
+            rekapBulananTable.innerHTML = '';
+            
+            // Filter data for the selected month and year
+            const filteredData = attendanceData.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate.getMonth() === parseInt(month) && entryDate.getFullYear() === parseInt(year);
+            });
+            
+            if (filteredData.length > 0) {
+                rekapBulananEmpty.classList.add('hidden');
+                
+                // Group by student
+                const studentRecap = {};
+                students.forEach(student => {
+                    studentRecap[student.name] = {
+                        hadir: 0,
+                        izin: 0,
+                        sakit: 0,
+                        alfa: 0
+                    };
+                });
+                
+                filteredData.forEach(entry => {
+                    if (studentRecap[entry.student]) {
+                        switch(entry.status) {
+                            case 'Hadir':
+                                studentRecap[entry.student].hadir++;
+                                break;
+                            case 'Izin':
+                                studentRecap[entry.student].izin++;
+                                break;
+                            case 'Sakit':
+                                studentRecap[entry.student].sakit++;
+                                break;
+                            case 'Alfa':
+                                studentRecap[entry.student].alfa++;
+                                break;
+                        }
+                    }
+                });
+                
+                // Create table rows
+                Object.keys(studentRecap).sort().forEach((student, index) => {
+                    const recap = studentRecap[student];
+                    const total = recap.hadir + recap.izin + recap.sakit + recap.alfa;
+                    
+                    if (total > 0) {
+                        const row = document.createElement('tr');
+                        row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                        row.innerHTML = `
+                            <td class="py-3 px-6 text-left">${index + 1}</td>
+                            <td class="py-3 px-6 text-left">${student}</td>
+                            <td class="py-3 px-6 text-center">${recap.hadir}</td>
+                            <td class="py-3 px-6 text-center">${recap.izin}</td>
+                            <td class="py-3 px-6 text-center">${recap.sakit}</td>
+                            <td class="py-3 px-6 text-center">${recap.alfa}</td>
+                            <td class="py-3 px-6 text-center font-medium">${total}</td>
+                        `;
+                        rekapBulananTable.appendChild(row);
+                    }
+                });
+            } else {
+                rekapBulananEmpty.classList.remove('hidden');
+            }
+        }
+        
+        // Update semester recap table
+        function updateSemesterRecap(semester, year) {
+            const rekapSemesterTable = document.getElementById('rekapSemesterTable');
+            const rekapSemesterEmpty = document.getElementById('rekapSemesterEmpty');
+            rekapSemesterTable.innerHTML = '';
+            
+            // Define semester months
+            const semesterMonths = semester === '1' 
+                ? [6, 7, 8, 9, 10, 11] // July-December
+                : [0, 1, 2, 3, 4, 5];  // January-June
+            
+            // Filter data for the selected semester and year
+            const filteredData = attendanceData.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return semesterMonths.includes(entryDate.getMonth()) && entryDate.getFullYear() === parseInt(year);
+            });
+            
+            if (filteredData.length > 0) {
+                rekapSemesterEmpty.classList.add('hidden');
+                
+                // Group by student
+                const studentRecap = {};
+                students.forEach(student => {
+                    studentRecap[student.name] = {
+                        hadir: 0,
+                        izin: 0,
+                        sakit: 0,
+                        alfa: 0
+                    };
+                });
+                
+                filteredData.forEach(entry => {
+                    if (studentRecap[entry.student]) {
+                        switch(entry.status) {
+                            case 'Hadir':
+                                studentRecap[entry.student].hadir++;
+                                break;
+                            case 'Izin':
+                                studentRecap[entry.student].izin++;
+                                break;
+                            case 'Sakit':
+                                studentRecap[entry.student].sakit++;
+                                break;
+                            case 'Alfa':
+                                studentRecap[entry.student].alfa++;
+                                break;
+                        }
+                    }
+                });
+                
+                // Create table rows
+                Object.keys(studentRecap).sort().forEach((student, index) => {
+                    const recap = studentRecap[student];
+                    const total = recap.hadir + recap.izin + recap.sakit + recap.alfa;
+                    
+                    if (total > 0) {
+                        const percentage = total > 0 ? Math.round((recap.hadir / total) * 100) : 0;
+                        let percentageClass = '';
+                        
+                        if (percentage >= 90) {
+                            percentageClass = 'text-green-600 font-bold';
+                        } else if (percentage >= 75) {
+                            percentageClass = 'text-blue-600 font-medium';
+                        } else if (percentage >= 50) {
+                            percentageClass = 'text-yellow-600 font-medium';
+                        } else {
+                            percentageClass = 'text-red-600 font-medium';
+                        }
+                        
+                        const row = document.createElement('tr');
+                        row.className = index % 2 === 0 ? 'bg-white' : 'bg-gray-50';
+                        row.innerHTML = `
+                            <td class="py-3 px-6 text-left">${index + 1}</td>
+                            <td class="py-3 px-6 text-left">${student}</td>
+                            <td class="py-3 px-6 text-center">${recap.hadir}</td>
+                            <td class="py-3 px-6 text-center">${recap.izin}</td>
+                            <td class="py-3 px-6 text-center">${recap.sakit}</td>
+                            <td class="py-3 px-6 text-center">${recap.alfa}</td>
+                            <td class="py-3 px-6 text-center font-medium">${total}</td>
+                            <td class="py-3 px-6 text-center ${percentageClass}">${percentage}%</td>
+                        `;
+                        rekapSemesterTable.appendChild(row);
+                    }
+                });
+            } else {
+                rekapSemesterEmpty.classList.remove('hidden');
+            }
+        }
+        
+        // Initialize charts
+        function initializeCharts() {
+            // Monthly chart
+            const ctxBulanan = document.getElementById('chartBulanan').getContext('2d');
+            chartBulanan = new Chart(ctxBulanan, {
+                type: 'bar',
+                data: {
+                    labels: ['Hadir', 'Izin', 'Sakit', 'Alfa'],
+                    datasets: [{
+                        label: 'Jumlah Kehadiran',
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                precision: 0
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Semester chart
+            const ctxSemester = document.getElementById('chartSemester').getContext('2d');
+            chartSemester = new Chart(ctxSemester, {
+                type: 'pie',
+                data: {
+                    labels: ['Hadir', 'Izin', 'Sakit', 'Alfa'],
+                    datasets: [{
+                        data: [0, 0, 0, 0],
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(59, 130, 246, 1)',
+                            'rgba(16, 185, 129, 1)',
+                            'rgba(245, 158, 11, 1)',
+                            'rgba(239, 68, 68, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Update charts with initial data
+            updateMonthlyChart(document.getElementById('bulanGrafik').value, document.getElementById('tahunGrafik').value);
+            updateSemesterChart(currentSemester, document.getElementById('tahunSemesterGrafik').value);
+        }
+        
+        // Update monthly chart
+        function updateMonthlyChart(month, year) {
+            // Filter data for the selected month and year
+            const filteredData = attendanceData.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate.getMonth() === parseInt(month) && entryDate.getFullYear() === parseInt(year);
+            });
+            
+            // Count status occurrences
+            const statusCounts = {
+                Hadir: 0,
+                Izin: 0,
+                Sakit: 0,
+                Alfa: 0
+            };
+            
+            filteredData.forEach(entry => {
+                statusCounts[entry.status]++;
+            });
+            
+            // Update chart
+            chartBulanan.data.datasets[0].data = [
+                statusCounts.Hadir,
+                statusCounts.Izin,
+                statusCounts.Sakit,
+                statusCounts.Alfa
+            ];
+            chartBulanan.update();
+        }
+        
+        // Update semester chart
+        function updateSemesterChart(semester, year) {
+            // Define semester months
+            const semesterMonths = semester === '1' 
+                ? [6, 7, 8, 9, 10, 11] // July-December
+                : [0, 1, 2, 3, 4, 5];  // January-June
+            
+            // Filter data for the selected semester and year
+            const filteredData = attendanceData.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return semesterMonths.includes(entryDate.getMonth()) && entryDate.getFullYear() === parseInt(year);
+            });
+            
+            // Count status occurrences
+            const statusCounts = {
+                Hadir: 0,
+                Izin: 0,
+                Sakit: 0,
+                Alfa: 0
+            };
+            
+            filteredData.forEach(entry => {
+                statusCounts[entry.status]++;
+            });
+            
+            // Update chart
+            chartSemester.data.datasets[0].data = [
+                statusCounts.Hadir,
+                statusCounts.Izin,
+                statusCounts.Sakit,
+                statusCounts.Alfa
+            ];
+            chartSemester.update();
+        }
+        
+        // Show modal for editing student
+        function showEditStudentModal(student) {
+            modalTitle.textContent = 'Edit Siswa';
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+                        <input type="text" id="editStudentName" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="${student.name}">
+                    </div>
+                </div>
+            `;
+            modalFooter.innerHTML = `
+                <button id="cancelEditStudent" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-md font-medium transition duration-300">
+                    Batal
+                </button>
+                <button id="saveEditStudent" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition duration-300">
+                    Simpan
+                </button>
+            `;
+            
+            document.getElementById('cancelEditStudent').addEventListener('click', hideModal);
+            document.getElementById('saveEditStudent').addEventListener('click', function() {
+                const newName = document.getElementById('editStudentName').value.trim().toUpperCase();
+                
+                if (!newName) {
+                    showToast('Nama siswa tidak boleh kosong', 'error');
+                    return;
+                }
+                
+                // Check if name already exists (except for the current student)
+                if (students.some(s => s.name === newName && s.name !== student.name)) {
+                    showToast('Nama siswa sudah terdaftar', 'error');
+                    return;
+                }
+                
+                // Update student name in attendance data
+                attendanceData.forEach(entry => {
+                    if (entry.student === student.name) {
+                        entry.student = newName;
+                    }
+                });
+                
+                // Update student name in students array
+                const index = students.findIndex(s => s.name === student.name);
+                if (index !== -1) {
+                    students[index].name = newName;
+                }
+                
+                populateStudentDropdown();
+                updateStudentList();
+                updateAttendanceTable(filterTanggalHarian.value);
+                hideModal();
+                showToast('Data siswa berhasil diperbarui');
+            });
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // Show modal for deleting student
+        function showDeleteStudentModal(student) {
+            modalTitle.textContent = 'Hapus Siswa';
+            modalContent.innerHTML = `
+                <p class="text-gray-700">Apakah Anda yakin ingin menghapus siswa <span class="font-semibold">${student.name}</span>?</p>
+                <p class="text-gray-700 mt-2">Semua data absensi untuk siswa ini juga akan dihapus.</p>
+            `;
+            modalFooter.innerHTML = `
+                <button id="cancelDeleteStudent" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-md font-medium transition duration-300">
+                    Batal
+                </button>
+                <button id="confirmDeleteStudent" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md font-medium transition duration-300">
+                    Hapus
+                </button>
+            `;
+            
+            document.getElementById('cancelDeleteStudent').addEventListener('click', hideModal);
+            document.getElementById('confirmDeleteStudent').addEventListener('click', function() {
+                // Remove student from students array
+                const index = students.findIndex(s => s.name === student.name);
+                if (index !== -1) {
+                    students.splice(index, 1);
+                }
+                
+                // Remove attendance data for this student
+                attendanceData = attendanceData.filter(entry => entry.student !== student.name);
+                
+                populateStudentDropdown();
+                updateStudentList();
+                updateAttendanceTable(filterTanggalHarian.value);
+                hideModal();
+                showToast('Siswa berhasil dihapus');
+            });
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // Show modal for editing attendance
+        function showEditAttendanceModal(entry) {
+            modalTitle.textContent = 'Edit Absensi';
+            modalContent.innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nama Siswa</label>
+                        <select id="editAttendanceStudent" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 custom-scrollbar">
+                            ${students.sort((a, b) => a.name.localeCompare(b.name)).map(student => 
+                                `<option value="${student.name}" ${student.name === entry.student ? 'selected' : ''}>${student.name}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal</label>
+                        <input type="date" id="editAttendanceDate" class="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" value="${entry.date}">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status Kehadiran</label>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                            <button type="button" class="edit-status-btn ${entry.status === 'Hadir' ? 'btn-primary' : 'bg-gray-200 text-gray-700'} py-2 px-3 rounded-md text-sm font-medium" data-status="Hadir">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Hadir
+                            </button>
+                            <button type="button" class="edit-status-btn ${entry.status === 'Izin' ? 'btn-primary' : 'bg-gray-200 text-gray-700'} py-2 px-3 rounded-md text-sm font-medium" data-status="Izin">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Izin
+                            </button>
+                            <button type="button" class="edit-status-btn ${entry.status === 'Sakit' ? 'btn-primary' : 'bg-gray-200 text-gray-700'} py-2 px-3 rounded-md text-sm font-medium" data-status="Sakit">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                Sakit
+                            </button>
+                            <button type="button" class="edit-status-btn ${entry.status === 'Alfa' ? 'btn-primary' : 'bg-gray-200 text-gray-700'} py-2 px-3 rounded-md text-sm font-medium" data-status="Alfa">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 inline-block mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Alfa
+                            </button>
+                        </div>
+                        <input type="hidden" id="editAttendanceStatus" value="${entry.status}">
+                    </div>
+                </div>
+            `;
+            modalFooter.innerHTML = `
+                <button id="cancelEditAttendance" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-md font-medium transition duration-300">
+                    Batal
+                </button>
+                <button id="saveEditAttendance" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md font-medium transition duration-300">
+                    Simpan
+                </button>
+            `;
+            
+            // Add event listeners to status buttons
+            document.querySelectorAll('.edit-status-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.querySelectorAll('.edit-status-btn').forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('btn-primary');
+                    document.getElementById('editAttendanceStatus').value = this.getAttribute('data-status');
+                });
+            });
+            
+            document.getElementById('cancelEditAttendance').addEventListener('click', hideModal);
+            document.getElementById('saveEditAttendance').addEventListener('click', function() {
+                const student = document.getElementById('editAttendanceStudent').value;
+                const date = document.getElementById('editAttendanceDate').value;
+                const status = document.getElementById('editAttendanceStatus').value;
+                
+                if (!student || !date) {
+                    showToast('Mohon lengkapi data absensi', 'error');
+                    return;
+                }
+                
+                // Check if already attended (except for the current entry)
+                const alreadyAttended = attendanceData.some(item => 
+                    item.student === student && 
+                    item.date === date && 
+                    item.id !== entry.id
+                );
+                
+                if (alreadyAttended) {
+                    showToast('Siswa sudah melakukan absensi pada tanggal ini', 'error');
+                    return;
+                }
+                
+                // Update attendance entry
+                const index = attendanceData.findIndex(item => item.id === entry.id);
+                if (index !== -1) {
+                    attendanceData[index].student = student;
+                    attendanceData[index].date = date;
+                    attendanceData[index].status = status;
+                }
+                
+                updateAttendanceTable(filterTanggalHarian.value);
+                hideModal();
+                showToast('Data absensi berhasil diperbarui');
+            });
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // Show modal for deleting attendance
+        function showDeleteAttendanceModal(entry) {
+            modalTitle.textContent = 'Hapus Absensi';
+            modalContent.innerHTML = `
+                <p class="text-gray-700">Apakah Anda yakin ingin menghapus data absensi untuk:</p>
+                <p class="font-semibold text-gray-800 mt-2">${entry.student}</p>
+                <p class="text-gray-700">Tanggal: ${formatDate(entry.date)}</p>
+                <p class="text-gray-700">Status: ${entry.status}</p>
+            `;
+            modalFooter.innerHTML = `
+                <button id="cancelDeleteAttendance" class="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded-md font-medium transition duration-300">
+                    Batal
+                </button>
+                <button id="confirmDeleteAttendance" class="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-md font-medium transition duration-300">
+                    Hapus
+                </button>
+            `;
+            
+            document.getElementById('cancelDeleteAttendance').addEventListener('click', hideModal);
+            document.getElementById('confirmDeleteAttendance').addEventListener('click', function() {
+                // Remove attendance entry
+                attendanceData = attendanceData.filter(item => item.id !== entry.id);
+                
+                updateAttendanceTable(filterTanggalHarian.value);
+                hideModal();
+                showToast('Data absensi berhasil dihapus');
+            });
+            
+            modal.classList.remove('hidden');
+        }
+        
+        // Hide modal
+        function hideModal() {
+            modal.classList.add('hidden');
+        }
+        
+        // Show toast notification
+        function showToast(message, type = 'success') {
+            toastMessage.textContent = message;
+            
+            if (type === 'success') {
+                toast.classList.remove('bg-red-500');
+                toast.classList.add('bg-green-500');
+            } else {
+                toast.classList.remove('bg-green-500');
+                toast.classList.add('bg-red-500');
+            }
+            
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+        
+        // Format date for display
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+        
+        // Format time for display
+        function formatTime(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        // Generate unique ID
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Toggle mobile navigation
+            toggleNav.addEventListener('click', function() {
+                mainNav.classList.toggle('hidden');
+            });
+            
+            // Navigation tabs
+            navItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const target = this.getAttribute('data-target');
+                    
+                    // Update active tab
+                    navItems.forEach(nav => nav.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Show selected section
+                    pageSections.forEach(section => {
+                        if (section.id === target) {
+                            section.classList.remove('hidden');
+                            currentSection = target;
+                        } else {
+                            section.classList.add('hidden');
+                        }
+                    });
+                    
+                    // Hide mobile nav after selection
+                    if (window.innerWidth < 768) {
+                        mainNav.classList.add('hidden');
+                    }
+                });
+            });
+            
+            // Status buttons
+            statusButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    statusButtons.forEach(btn => {
+                        btn.classList.remove('btn-primary');
+                        btn.classList.add('bg-gray-200', 'text-gray-700');
+                    });
+                    this.classList.remove('bg-gray-200', 'text-gray-700');
+                    this.classList.add('btn-primary');
+                    statusKehadiran.value = this.getAttribute('data-status');
+                });
+            });
+            
+            // Absensi form submission
+            absensiForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const student = namaSiswaDropdown.value;
+                const date = tanggalAbsensi.value;
+                const status = statusKehadiran.value;
+                
+                if (!student || !date) {
+                    showToast('Mohon lengkapi data absensi', 'error');
+                    return;
+                }
+                
+                // Check if already attended
+                const alreadyAttended = attendanceData.some(entry => 
+                    entry.student === student && entry.date === date
+                );
+                
+                if (alreadyAttended) {
+                    showToast('Siswa sudah melakukan absensi pada tanggal ini', 'error');
+                    return;
+                }
+                
+                // Add attendance
+                const newEntry = {
+                    id: generateId(),
+                    student: student,
+                    date: date,
+                    status: status,
+                    timestamp: new Date().toISOString()
+                };
+                
+                attendanceData.push(newEntry);
+                updateAttendanceTable(date);
+                
+                // Reset form
+                namaSiswaDropdown.value = '';
+                
+                showToast('Absensi berhasil disimpan');
+            });
+            
+            // Filter tanggal harian
+            filterTanggalHarian.addEventListener('change', function() {
+                updateAttendanceTable(this.value);
+            });
+            
+            // Refresh absensi harian
+            refreshAbsensiHarian.addEventListener('click', function() {
+                updateAttendanceTable(filterTanggalHarian.value);
+                showToast('Data absensi diperbarui');
+            });
+            
+            // Tambah siswa form submission
+            tambahSiswaForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const name = namaSiswaBaru.value.trim().toUpperCase();
+                
+                if (!name) {
+                    showToast('Mohon masukkan nama siswa', 'error');
+                    return;
+                }
+                
+                // Check if student already exists
+                if (students.some(s => s.name === name)) {
+                    showToast('Siswa sudah terdaftar', 'error');
+                    return;
+                }
+                
+                // Add student
+                students.push({ name: name });
+                
+                populateStudentDropdown();
+                updateStudentList();
+                
+                // Reset form
+                namaSiswaBaru.value = '';
+                
+                showToast('Siswa berhasil ditambahkan');
+            });
+            
+            // Search siswa
+            searchSiswa.addEventListener('input', function() {
+                updateStudentList(this.value);
+            });
+            
+            // Close modal
+            closeModal.addEventListener('click', hideModal);
+            
+            // Filter bulanan
+            document.getElementById('filterBulanan').addEventListener('click', function() {
+                const month = document.getElementById('bulanRekap').value;
+                const year = document.getElementById('tahunRekap').value;
+                updateMonthlyRecap(month, year);
+            });
+            
+            // Filter semester
+            document.getElementById('filterSemester').addEventListener('click', function() {
+                const year = document.getElementById('tahunSemesterRekap').value;
+                updateSemesterRecap(currentSemester, year);
+            });
+            
+            // Update grafik bulanan
+            document.getElementById('updateGrafikBulanan').addEventListener('click', function() {
+                const month = document.getElementById('bulanGrafik').value;
+                const year = document.getElementById('tahunGrafik').value;
+                updateMonthlyChart(month, year);
+            });
+            
+            // Update grafik semester
+            document.getElementById('updateGrafikSemester').addEventListener('click', function() {
+                const year = document.getElementById('tahunSemesterGrafik').value;
+                updateSemesterChart(currentSemester, year);
+            });
+            
+            // Semester tabs
+            semesterTabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const semester = this.getAttribute('data-semester');
+                    currentSemester = semester;
+                    
+                    // Update active tab
+                    semesterTabs.forEach(t => {
+                        t.classList.remove('active');
+                        t.classList.add('bg-gray-100');
+                    });
+                    this.classList.add('active');
+                    this.classList.remove('bg-gray-100');
+                });
+            });
+            
+            // Semester tabs for grafik
+            document.getElementById('semesterGrafik1').addEventListener('click', function() {
+                document.getElementById('semesterGrafik2').classList.remove('active');
+                document.getElementById('semesterGrafik2').classList.add('bg-gray-100');
+                this.classList.add('active');
+                this.classList.remove('bg-gray-100');
+                updateSemesterChart('1', document.getElementById('tahunSemesterGrafik').value);
+            });
+            
+            document.getElementById('semesterGrafik2').addEventListener('click', function() {
+                document.getElementById('semesterGrafik1').classList.remove('active');
+                document.getElementById('semesterGrafik1').classList.add('bg-gray-100');
+                this.classList.add('active');
+                this.classList.remove('bg-gray-100');
+                updateSemesterChart('2', document.getElementById('tahunSemesterGrafik').value);
+            });
+            
+            // Download rekap bulanan as PDF
+            downloadRekapBulanan.addEventListener('click', function() {
+                const month = document.getElementById('bulanRekap').value;
+                const year = document.getElementById('tahunRekap').value;
+                generateMonthlyPDF(month, year);
+            });
+            
+            // Download rekap semester as PDF
+            downloadRekapSemester.addEventListener('click', function() {
+                const year = document.getElementById('tahunSemesterRekap').value;
+                generateSemesterPDF(currentSemester, year);
+            });
+        }
+        
+        // Generate monthly PDF
+        function generateMonthlyPDF(month, year) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Filter data for the selected month and year
+            const filteredData = attendanceData.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return entryDate.getMonth() === parseInt(month) && entryDate.getFullYear() === parseInt(year);
+            });
+            
+            // Group by student
+            const studentRecap = {};
+            students.forEach(student => {
+                studentRecap[student.name] = {
+                    hadir: 0,
+                    izin: 0,
+                    sakit: 0,
+                    alfa: 0
+                };
+            });
+            
+            filteredData.forEach(entry => {
+                if (studentRecap[entry.student]) {
+                    switch(entry.status) {
+                        case 'Hadir':
+                            studentRecap[entry.student].hadir++;
+                            break;
+                        case 'Izin':
+                            studentRecap[entry.student].izin++;
+                            break;
+                        case 'Sakit':
+                            studentRecap[entry.student].sakit++;
+                            break;
+                        case 'Alfa':
+                            studentRecap[entry.student].alfa++;
+                            break;
+                    }
+                }
+            });
+            
+            // Prepare data for PDF
+            const monthNames = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            
+            // Add header
+            doc.setFontSize(16);
+            doc.text('MI AR ROUDHOH', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text('Tambakasri-Tajinan-Malang', 105, 27, { align: 'center' });
+            doc.setLineWidth(0.5);
+            doc.line(20, 30, 190, 30);
+            
+            // Add title
+            doc.setFontSize(14);
+            doc.text(`Rekap Absensi Bulanan Kelas 4B`, 105, 40, { align: 'center' });
+            doc.text(`Bulan: ${monthNames[parseInt(month)]} ${year}`, 105, 48, { align: 'center' });
+            
+            // Create table
+            const tableData = [];
+            let validEntries = 0;
+            
+            Object.keys(studentRecap).sort().forEach((student, index) => {
+                const recap = studentRecap[student];
+                const total = recap.hadir + recap.izin + recap.sakit + recap.alfa;
+                
+                if (total > 0) {
+                    validEntries++;
+                    tableData.push([
+                        validEntries,
+                        student,
+                        recap.hadir,
+                        recap.izin,
+                        recap.sakit,
+                        recap.alfa,
+                        total
+                    ]);
+                }
+            });
+            
+            if (tableData.length > 0) {
+                doc.autoTable({
+                    startY: 55,
+                    head: [['No', 'Nama Siswa', 'Hadir', 'Izin', 'Sakit', 'Alfa', 'Total']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [59, 130, 246],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    styles: {
+                        fontSize: 10,
+                        cellPadding: 3
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 60 }
+                    }
+                });
+                
+                // Add signature
+                const finalY = doc.lastAutoTable.finalY + 20;
+                const today = new Date();
+                const formattedDate = `${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+                
+                doc.text(`Malang, ${formattedDate}`, 150, finalY);
+                doc.text('Kepala Sekolah', 150, finalY + 7);
+                doc.text('Junaide, S.E, S.Pd', 150, finalY + 30);
+                
+                // Save PDF
+                doc.save(`Rekap_Absensi_Kelas_4B_${monthNames[parseInt(month)]}_${year}.pdf`);
+                showToast('Rekap berhasil diunduh');
+            } else {
+                showToast('Tidak ada data untuk diunduh', 'error');
+            }
+        }
+        
+        // Generate semester PDF
+        function generateSemesterPDF(semester, year) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Define semester months
+            const semesterMonths = semester === '1' 
+                ? [6, 7, 8, 9, 10, 11] // July-December
+                : [0, 1, 2, 3, 4, 5];  // January-June
+            
+            // Filter data for the selected semester and year
+            const filteredData = attendanceData.filter(entry => {
+                const entryDate = new Date(entry.date);
+                return semesterMonths.includes(entryDate.getMonth()) && entryDate.getFullYear() === parseInt(year);
+            });
+            
+            // Group by student
+            const studentRecap = {};
+            students.forEach(student => {
+                studentRecap[student.name] = {
+                    hadir: 0,
+                    izin: 0,
+                    sakit: 0,
+                    alfa: 0
+                };
+            });
+            
+            filteredData.forEach(entry => {
+                if (studentRecap[entry.student]) {
+                    switch(entry.status) {
+                        case 'Hadir':
+                            studentRecap[entry.student].hadir++;
+                            break;
+                        case 'Izin':
+                            studentRecap[entry.student].izin++;
+                            break;
+                        case 'Sakit':
+                            studentRecap[entry.student].sakit++;
+                            break;
+                        case 'Alfa':
+                            studentRecap[entry.student].alfa++;
+                            break;
+                    }
+                }
+            });
+            
+            // Prepare data for PDF
+            const monthNames = [
+                'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+                'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+            ];
+            
+            // Add header
+            doc.setFontSize(16);
+            doc.text('MI AR ROUDHOH', 105, 20, { align: 'center' });
+            doc.setFontSize(12);
+            doc.text('Tambakasri-Tajinan-Malang', 105, 27, { align: 'center' });
+            doc.setLineWidth(0.5);
+            doc.line(20, 30, 190, 30);
+            
+            // Add title
+            doc.setFontSize(14);
+            doc.text(`Rekap Absensi Semester ${semester} Kelas 4B`, 105, 40, { align: 'center' });
+            doc.text(`Tahun Ajaran ${year}`, 105, 48, { align: 'center' });
+            
+            // Create table
+            const tableData = [];
+            let validEntries = 0;
+            
+            Object.keys(studentRecap).sort().forEach((student, index) => {
+                const recap = studentRecap[student];
+                const total = recap.hadir + recap.izin + recap.sakit + recap.alfa;
+                
+                if (total > 0) {
+                    validEntries++;
+                    const percentage = total > 0 ? Math.round((recap.hadir / total) * 100) : 0;
+                    tableData.push([
+                        validEntries,
+                        student,
+                        recap.hadir,
+                        recap.izin,
+                        recap.sakit,
+                        recap.alfa,
+                        total,
+                        `${percentage}%`
+                    ]);
+                }
+            });
+            
+            if (tableData.length > 0) {
+                doc.autoTable({
+                    startY: 55,
+                    head: [['No', 'Nama Siswa', 'Hadir', 'Izin', 'Sakit', 'Alfa', 'Total', 'Persentase']],
+                    body: tableData,
+                    theme: 'grid',
+                    headStyles: {
+                        fillColor: [59, 130, 246],
+                        textColor: 255,
+                        fontStyle: 'bold'
+                    },
+                    styles: {
+                        fontSize: 10,
+                        cellPadding: 3
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 50 }
+                    }
+                });
+                
+                // Add signature
+                const finalY = doc.lastAutoTable.finalY + 20;
+                const today = new Date();
+                const formattedDate = `${today.getDate()} ${monthNames[today.getMonth()]} ${today.getFullYear()}`;
+                
+                doc.text(`Malang, ${formattedDate}`, 150, finalY);
+                doc.text('Kepala Sekolah', 150, finalY + 7);
+                doc.text('Junaide, S.E, S.Pd', 150, finalY + 30);
+                
+                // Save PDF
+                doc.save(`Rekap_Absensi_Semester${semester}_Kelas_4B_${year}.pdf`);
+                showToast('Rekap berhasil diunduh');
+            } else {
+                showToast('Tidak ada data untuk diunduh', 'error');
+            }
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'960b19a1e1c3fd36',t:'MTc1Mjc2OTU3Ny4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
